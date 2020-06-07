@@ -8,6 +8,7 @@ Voice converter, WIP
 * PyTorch
 * `librosa`
 
-# Dataset
+# Datasets
 
-* Librispeech: http://www.openslr.org/12
+* TIMIT
+* LibriSpeech
