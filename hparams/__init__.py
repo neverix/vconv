@@ -2,4 +2,4 @@
 Hyperparameters/configuration.
 """
 
-from .hparams import hparams, timit
+from .hparams import *

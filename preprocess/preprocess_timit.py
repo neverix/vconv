@@ -8,7 +8,7 @@ and `data/recognition/train.pkl` is the path to store the preprocessed data in:
 """
 
 
-from hparams import timit
+from hparams import timit, Map
 from . import preprocess
 from pathlib import Path
 import pickle
@@ -16,7 +16,7 @@ import argparse
 import numpy as np
 
 
-def preprocess_wav_timit(wav_path: Path, hp=timit):
+def preprocess_wav_timit(wav_path: Path, hp: Map):
     """
     Open and preprocess a wav/phn pair.
     :param wav_path: path to the wav file
@@ -35,20 +35,31 @@ def preprocess_wav_timit(wav_path: Path, hp=timit):
     return mel, phn
 
 
+def walk_dataset_timit(dataset_path: Path, hp: Map):
+    """
+    Walk through all .wav files in the TIMIT dataset.
+    :param dataset_path: path to TIMIT dataset
+    :param hp: hyperparameters object
+    :return: a generator of data samples
+    """
+    for path in dataset_path.rglob("*.WAV"):
+        yield preprocess_wav_timit(path, hp)
+
+
 def main():
     """
     The main function.
     """
     parser = argparse.ArgumentParser(description='Preprocess TIMIT.')
     parser.add_argument("source", help="Path to TIMIT dataset at root level (containing folders like DR1, DR2 etc).")
-    parser.add_argument("target", help="Path to the pickle file to store the preprocessed data in.")
+    parser.add_argument("target", nargs="?", help="Path to the pickle file to store the preprocessed data in.",
+                        default="data/recognition/train.pkl")
     args = parser.parse_args()
 
     data = []
-    wavs = list(Path(args.source).rglob("*.WAV"))
-    for i, path in enumerate(wavs):
-        print(f"\rPreprocessing file {i + 1}/{len(wavs)}...", end='')
-        data.append(preprocess_wav_timit(path))
+    for i, x in enumerate(walk_dataset_timit(Path(args.source), hp=timit)):
+        data.append(x)
+        print(f"\rPreprocessed file #{i + 1}.", end='')
 
     print("\nFinished preprocessing, saving...")
     save_file = Path(args.target)

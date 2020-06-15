@@ -27,3 +27,8 @@ timit = Map(
     source_sr=16000,
     sr=16000
 )
+
+librispeech = Map(
+    hparams,
+    n_samples=10
+)

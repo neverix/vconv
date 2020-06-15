@@ -1,10 +1,10 @@
-from hparams import hparams
+from hparams import Map
 from pathlib import Path
 import librosa
 import numpy as np
 
 
-def preprocess_wav(path: Path, hp=hparams):
+def preprocess_wav(path: Path, hp: Map):
     """
     Reads audio file and converts it into a spectrogram.
     :param path: path to the audio file
@@ -21,5 +21,5 @@ def preprocess_wav(path: Path, hp=hparams):
         n_fft=int(hp.mel_window_length * hp.sr / 1000),
         hop_length=int(hp.mel_window_step * hp.sr / 1000),
     ).T
-    mel = np.clip((librosa.power_to_db(mel) + hp.min_level_db) / (hp.max_level_db + hp.min_level_db), 0, 1)
+    mel = np.clip((librosa.power_to_db(mel) + hp.min_level_db) / (hp.max_level_db - hp.min_level_db), 0, 1)
     return mel.astype(np.float32)

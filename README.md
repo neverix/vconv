@@ -7,6 +7,7 @@ Voice converter, WIP
 * Python 3.6+
 * PyTorch
 * `librosa`
+* `resemblyzer`
 
 # Datasets
 
