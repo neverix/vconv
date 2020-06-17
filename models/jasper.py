@@ -4,6 +4,7 @@ A (hopefully) generalizable speech recognition/synthesis model based on Jasper 5
 
 from hparams import Map
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class JasperModel(nn.Module):
@@ -54,7 +55,7 @@ class ResBlock(nn.Module):
     def forward(self, x):
         f = self.first(x)
         y = f
-        for i, sub in self.subs:
+        for i, sub in enumerate(self.subs):
             last = i == len(self.subs) - 1
             y = sub(y, r=f if last else None)
         return y
@@ -66,12 +67,11 @@ class ConvBNRelu(nn.Module):
     """
     def __init__(self, hp: Map):
         super(ConvBNRelu, self).__init__()
-        self.hp = hp
         padding = int(hp.dilation * (hp.kernel_size - 1) / 2)
         self.conv = nn.Conv1d(hp.in_channels, hp.out_channels,
                               kernel_size=hp.kernel_size,
                               padding=padding, bias=True,
-                              stride=hp.stride, dilation=hp.dilation)
+                              dilation=hp.dilation)
         self.bn = nn.BatchNorm1d(hp.out_channels)
         self.activation = hp.activation
         self.dropout = nn.Dropout(hp.dropout_prob)
@@ -81,6 +81,9 @@ class ConvBNRelu(nn.Module):
         y = self.bn(y)
         if r is not None:
             y += r
-        y = self.activation(y)
+        if self.activation == "relu":
+            y = F.relu(y)
+        elif self.activation == "softmax":
+            y = F.softmax(y, dim=1)
         y = self.dropout(y)
         return y
