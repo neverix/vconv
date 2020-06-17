@@ -7,7 +7,6 @@ and `data/synthesis/train.pkl` is the path to store the preprocessed data in:
  $ python -m preprocess.preprocess_librispeech data/librispeech/train/ data/synthesis/train.pkl
 """
 
-
 from hparams import librispeech, Map
 from . import preprocess
 from pathlib import Path

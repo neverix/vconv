@@ -13,3 +13,10 @@ Voice converter, WIP
 
 * TIMIT
 * LibriSpeech
+
+# How to use
+WIP
+```
+make train_recognition
+```
+

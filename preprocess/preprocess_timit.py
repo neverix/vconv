@@ -7,7 +7,6 @@ and `data/recognition/train.pkl` is the path to store the preprocessed data in:
  $ python -m preprocess.preprocess_timit data/timit/train/ data/recognition/train.pkl
 """
 
-
 from hparams import timit, Map
 from . import preprocess
 from pathlib import Path

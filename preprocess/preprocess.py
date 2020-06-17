@@ -1,3 +1,7 @@
+"""
+General preprocessing routines.
+"""
+
 from hparams import Map
 from pathlib import Path
 import librosa
