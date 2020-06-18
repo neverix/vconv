@@ -8,6 +8,7 @@ Voice converter, WIP
 * PyTorch
 * `librosa`
 * `resemblyzer`
+* `scikit-learn`
 
 # Datasets
 

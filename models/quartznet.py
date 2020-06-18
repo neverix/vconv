@@ -1,5 +1,5 @@
 """
-A (hopefully) generalizable speech recognition/synthesis model based on Jasper 5x5.
+A (hopefully) generalizable speech recognition/synthesis model based on QuartzNet 5x5.
 """
 
 from hparams import Map
@@ -7,18 +7,19 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class JasperModel(nn.Module):
+class QuartzNet(nn.Module):
     """
-    Jasper model builder.
+    QuartzNet model builder.
     Hint: look at hparams to understand more.
     """
     def __init__(self, hp: Map):
-        super(JasperModel, self).__init__()
+        super(QuartzNet, self).__init__()
         param_names = hp.model_block_params
         params_default = hp.block_params_default
         blocks = hp.model_blocks
         self.blocks = nn.ModuleList()
         prev_channels = hp.in_channels
+        total_downscale = 1
         for params in blocks:
             params = params + params_default[len(params):]
             hparams = Map(hp)
@@ -28,6 +29,9 @@ class JasperModel(nn.Module):
             block = ResBlock(hparams)
             self.blocks.append(block)
             prev_channels = hparams.out_channels
+            assert hparams.kernel_size % 2 == 1
+            total_downscale *= hparams.stride
+        assert total_downscale == hparams.downscale_ratio
 
     def forward(self, x):
         y = x
@@ -38,7 +42,7 @@ class JasperModel(nn.Module):
 
 class ResBlock(nn.Module):
     """
-    Jasper residual block.
+    QuartzNet residual block.
     """
     def __init__(self, hp: Map):
         super(ResBlock, self).__init__()
@@ -48,7 +52,7 @@ class ResBlock(nn.Module):
         self.subs = nn.ModuleList()
         for i in range(hp.n_sub - 1):
             layer = ConvBNRelu(Map(
-                hp, in_channels=hp.out_channels, out_channels=hp.out_channels  # same here
+                hp, stride=1, in_channels=hp.out_channels, out_channels=hp.out_channels  # same here
             ))
             self.subs.append(layer)
 
@@ -68,10 +72,23 @@ class ConvBNRelu(nn.Module):
     def __init__(self, hp: Map):
         super(ConvBNRelu, self).__init__()
         padding = int(hp.dilation * (hp.kernel_size - 1) / 2)
-        self.conv = nn.Conv1d(hp.in_channels, hp.out_channels,
-                              kernel_size=hp.kernel_size,
-                              padding=padding, bias=True,
-                              dilation=hp.dilation)
+        if hp.tsconv:
+            self.conv = nn.Sequential(
+                # groupwise
+                nn.Conv1d(hp.in_channels, hp.in_channels,
+                          kernel_size=hp.kernel_size,
+                          padding=padding, stride=hp.stride,
+                          dilation=hp.dilation, groups=hp.in_channels,
+                          bias=False),
+                # pointwise
+                nn.Conv1d(hp.in_channels, hp.out_channels, groups=1,
+                          kernel_size=1, padding=0, bias=False)
+            )
+        else:
+            self.conv = nn.Conv1d(hp.in_channels, hp.out_channels,
+                                  kernel_size=hp.kernel_size,
+                                  padding=padding, bias=True,
+                                  dilation=hp.dilation, stride=hp.stride)
         self.bn = nn.BatchNorm1d(hp.out_channels)
         self.activation = hp.activation
         self.dropout = nn.Dropout(hp.dropout_prob)

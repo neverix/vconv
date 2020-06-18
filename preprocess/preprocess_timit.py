@@ -24,13 +24,13 @@ def preprocess_wav_timit(wav_path: Path, hp: Map):
     """
     mel = preprocess.preprocess_wav(wav_path, hp)
     phn_path = wav_path.with_suffix(".PHN")
-    phn = np.zeros((mel.shape[0], len(hp.phonemes)), dtype=np.float32)
+    phn = np.zeros(mel.shape[0], dtype=np.int)
     for line in phn_path.open():
         start, end, phn_path = line.split()
         start = int(start) // hp.mel_window_step // (hp.sr // 1000)
         end = int(end) // hp.mel_window_step // (hp.sr // 1000)
         idx = hp.phonemes.index(phn_path)
-        phn[start:end, idx] = 1
+        phn[start:end] = idx
     return mel, phn
 
 
